@@ -15,7 +15,7 @@ class appVersion extends Component {
 
 		return (
 			<div className='version'>
-				{this.state.version}
+				victormoove
 			</div>
 		)
 	}

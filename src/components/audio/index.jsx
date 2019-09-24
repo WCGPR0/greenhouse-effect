@@ -1,15 +1,9 @@
 import React, { Component } from 'react'
-import rise from 'assets/music/rise.mp3'
-import fantastic from 'assets/music/fantastic.mp3'
 import legendsNeverDie from 'assets/music/legends-never-die.mp3'
-import shortLegendsNeverDie from 'assets/music/short-legends-never-die.mp3'
 import audioWorkerJS from './audio.worker.js'
 
 import {
-  PlayArrow,
-  Pause,
-  FastForward,
-  FastRewind,
+  DonutLarge,
   VolumeMute,
   VolumeDown,
   VolumeUp
@@ -40,25 +34,10 @@ class Audio extends Component {
       duration: 0,
       tracks: [
         {
-          name: 'Small Piece of music LND',
-          artist: 'League of Legends',
-          url: shortLegendsNeverDie
-        },
-        {
-          name: 'Legends Never Die',
-          artist: 'League of Legends',
+          name: 'Untitled',
+          artist: 'Greenhouse Effect',
           url: legendsNeverDie
-        },
-        {
-          name: 'Rise',
-          artist: 'League of Legends',
-          url: rise
-        },
-        {
-          name: 'Fantastic - Cinematic Sound',
-          artist: 'AudioJungle',
-          url: fantastic
-        },
+        }
       ],
       musicIndex: 0,
       playing: false,
@@ -146,8 +125,6 @@ class Audio extends Component {
     this.loadSong = this.loadSong.bind(this)
     this.playSound = this.playSound.bind(this)
     this.startPlayer = this.startPlayer.bind(this)
-    this.suspendSong = this.suspendSong.bind(this)
-    this.resumeSong = this.resumeSong.bind(this)
     this.prevSong = this.prevSong.bind(this)
     this.nextSong = this.nextSong.bind(this)
     this.switchSong = this.switchSong.bind(this)
@@ -158,11 +135,6 @@ class Audio extends Component {
     // @Framer
     this.framerInit = this.framerInit.bind(this)
     this.framerDraw = this.framerDraw.bind(this)
-    this.framerDrawTick = this.framerDrawTick.bind(this)
-    this.framerDrawTicks = this.framerDrawTicks.bind(this)
-    this.framerDrawEdging = this.framerDrawEdging.bind(this)
-    this.framerGetTicks = this.framerGetTicks.bind(this)
-    this.framerGetTickPoints = this.framerGetTickPoints.bind(this)
     this.framerSetLoadingPercent = this.framerSetLoadingPercent.bind(this)
     this.framerGetSize = this.framerGetSize.bind(this)
     // @Scene
@@ -177,12 +149,7 @@ class Audio extends Component {
     this.trackerStopAnimation = this.trackerStopAnimation.bind(this)
     this.trackerIsInsideOfSmallCircle = this.trackerIsInsideOfSmallCircle.bind(this)
     this.trackerIsOusideOfBigCircle = this.trackerIsOusideOfBigCircle.bind(this)
-    // @Controls
-    this.controlsDraw = this.controlsDraw.bind(this)
-    this.controlsGetQuadrant = this.controlsGetQuadrant.bind(this)
     // @Miscs
-    this.changeVolume = this.changeVolume.bind(this)
-    this.getVolume = this.getVolume.bind(this)
     this.timeHandler = this.timeHandler.bind(this)
     this.preLoadCompleteSong = this.preLoadCompleteSong.bind(this)
     this.initEvents = this.initEvents.bind(this)
@@ -211,46 +178,6 @@ class Audio extends Component {
   }
 
   initEvents() {
-    document.addEventListener('keydown', (event) => {
-      const { audioContext } = this.state
-      const key = event.which
-
-      switch (key) {
-        // https://css-tricks.com/snippets/javascript/javascript-keycodes/
-        case 32:
-          /**
-           * key pressed: Spacebar
-           * pause or play song
-           */
-          if (audioContext.state === 'suspended') {
-            audioContext.resume()
-            this.setState({ playing: true })
-          } else {
-            audioContext.suspend()
-            this.setState({ playing: false })
-          }
-          break
-
-        case 78:
-          /**
-           * key pressed: N
-           * go to the next song
-           */
-          this.nextSong()
-          break
-
-        case 66:
-          /**
-           * key pressed: B
-           * back to the prev song
-           */
-          this.prevSong()
-          break
-
-        default:
-          break
-      }
-    })
   }
 
   handleWorkerCallback(data) {
@@ -270,7 +197,7 @@ class Audio extends Component {
       const analyser = audioContext.createAnalyser()
       const gainNode = audioContext.createGain()
 
-      analyser.fftSize = 2048
+      analyser.fftSize = 1024
       const bufferLength = analyser.frequencyBinCount
       const dataArray = new Uint8Array(bufferLength)
 
@@ -568,23 +495,6 @@ class Audio extends Component {
     })
   }
 
-  suspendSong() {
-    this.state.audioContext.suspend()
-    this.setState({ playing: false })
-  }
-
-  resumeSong() {
-    const { firstPlay } = this.state
-    if (firstPlay) {
-      this.setState({ isLoadingSong: true })
-      this.init()
-      this.setState({ firstPlay: false })
-    } else {
-      this.state.audioContext.resume()
-      this.setState({ playing: true })
-    }
-  }
-
   nextSong() {
     const {
       firstPlay,
@@ -656,9 +566,9 @@ class Audio extends Component {
 
   canvasConfigure(resolve) {
     let { canvas, canvasContext } = this.state
-    canvas = document.querySelector('#Player-canvas')
+    if (canvas == null)
+      canvas = document.querySelector('#Player-canvas')
     canvasContext = canvas.getContext('2d')
-    canvasContext.strokeStyle = '#61dafb'
 
     this.setState({
       canvas,
@@ -676,7 +586,7 @@ class Audio extends Component {
 
     const canvasScaleCoef = Math.max(0.5, 740 / optimiseHeight)
 
-    const size = Math.max(minSize, 1 /*document.body.clientHeight */)
+    const size = Math.max(minSize, document.body.clientHeight)
     canvas.setAttribute('width', size)
     canvas.setAttribute('height', size)
 
@@ -697,7 +607,7 @@ class Audio extends Component {
       canvasCy,
       canvasCoord,
       sceneRadius
-    }, () => resolve())
+    }, () => typeof resolve  === 'function' && resolve())
   }
 
   framerInit() {
@@ -774,179 +684,55 @@ class Audio extends Component {
   sceneDraw() {
     this.framerDraw()
     this.trackerDraw()
-    this.controlsDraw()
-  }
-
-  controlsDraw() {
-    const {
-      canvasContext,
-      trackerR,
-      trackerAngle,
-      sceneRadius,
-      scenePadding,
-      trackerEnabled,
-      hasStreamSupport
-    } = this.state
-
-    if (trackerEnabled || !hasStreamSupport) {
-      canvasContext.save()
-      canvasContext.beginPath()
-      canvasContext.fillStyle = 'rgba(97, 218, 251, 0.85)'
-      canvasContext.lineWidth = 1
-      let x = trackerR / Math.sqrt(Math.pow(Math.tan(trackerAngle), 2) + 1)
-      let y = Math.sqrt(trackerR * trackerR - x * x)
-      if (this.controlsGetQuadrant() === 2) {
-        x = -x
-      }
-      if (this.controlsGetQuadrant() === 3) {
-        x = -x
-        y = -y
-      }
-      if (this.controlsGetQuadrant() === 4) {
-        y = -y
-      }
-      canvasContext.arc(sceneRadius + scenePadding + x, sceneRadius + scenePadding + y, 10, 0, Math.PI * 2, false)
-      canvasContext.fill()
-      canvasContext.restore()
-    }
-  }
-
-  controlsGetQuadrant() {
-    const { trackerAngle } = this.state
-
-    if (0 <= trackerAngle && trackerAngle < Math.PI / 2) {
-      return 1
-    }
-    if (Math.PI / 2 <= trackerAngle && trackerAngle < Math.PI) {
-      return 2
-    }
-    if (Math.PI < trackerAngle && trackerAngle < Math.PI * 3 / 2) {
-      return 3
-    }
-    if (Math.PI * 3 / 2 <= trackerAngle && trackerAngle <= Math.PI * 2) {
-      return 4
-    }
   }
 
   framerDraw() {
-    this.framerDrawTicks()
-    this.framerDrawEdging()
+    this.frameLooper()
   }
 
-  framerDrawTicks() {
-    const { canvasContext } = this.state
-    let { framerTicks } = this.state
+  frameLooper() {
+    var i,
+      cx, cy,
+      r = 50,
+      beginAngle = 0,
+      angle,
+      twoPI = 2 * Math.PI,
+      angleGap = twoPI / 3,
+      color = 'rgba(115, 226, 36, 0.5)';
 
-    canvasContext.save()
-    canvasContext.beginPath()
-    canvasContext.lineWidth = 1
-    framerTicks = this.framerGetTicks([0, 90])
-    for (let i = 0, len = framerTicks.length; i < len; ++i) {
-      const tick = framerTicks[i]
-      this.framerDrawTick(tick.x1, tick.y1, tick.x2, tick.y2)
+    var fbc_array,data,total,len;
+    const {canvas, canvasContext, analyser} = this.state;
+    if (analyser === null || canvas === null || canvasContext == null) return;
+    len = 1024 / 16;
+
+    //window.requestAnimationFrame(this.frameLooper);
+    fbc_array = new Uint8Array(analyser.frequencyBinCount);
+
+    canvasContext.save();
+    analyser.getByteFrequencyData(fbc_array);
+    data = fbc_array;
+    angle = beginAngle;
+    cx = canvas.width / 2;
+    cy = canvas.height / 2;
+    canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+    canvasContext.strokeStyle = color;
+    canvasContext.globalCompositeOperation = 'lighter';
+    canvasContext.lineWidth = 10;
+    total = 0;
+    for (i = 8; i < len; i += 2) {
+        angle += 0.2;
+        canvasContext.beginPath();
+        canvasContext.moveTo(cx + data[i] * Math.sin(angle), cy + data[i] * Math.cos(angle));
+        canvasContext.lineTo(cx + data[i] * Math.sin(angle + angleGap), cy + data[i] * Math.cos(angle + angleGap));
+        canvasContext.lineTo(cx + data[i] * Math.sin(angle + angleGap * 2), cy + data[i] * Math.cos(angle + angleGap * 2));
+        canvasContext.closePath();
+        canvasContext.stroke();
+        total += data[i];
     }
-    canvasContext.restore()
-
-    this.setState({ framerTicks })
+    beginAngle = (beginAngle + 0.00001 * total) % twoPI;
+    canvasContext.restore();
   }
 
-  framerDrawTick(x1, y1, x2, y2) {
-    const {
-      canvasCx,
-      canvasCy,
-      canvasContext
-    } = this.state
-
-    const dx1 = parseInt(canvasCx + x1)
-    const dy1 = parseInt(canvasCy + y1)
-
-    const dx2 = parseInt(canvasCx + x2)
-    const dy2 = parseInt(canvasCy + y2)
-
-    const gradient = canvasContext.createLinearGradient(dx1, dy1, dx2, dy2)
-    gradient.addColorStop(0, '#61dafb')
-    gradient.addColorStop(0.6, '#61dafb')
-    gradient.addColorStop(1, '#F5F5F5')
-    canvasContext.beginPath()
-    canvasContext.strokeStyle = gradient
-    canvasContext.lineWidth = 2
-    canvasContext.moveTo(canvasCx + x1, canvasCx + y1)
-    canvasContext.lineTo(canvasCx + x2, canvasCx + y2)
-    canvasContext.stroke()
-  }
-
-  framerGetTicks(animationParams) {
-    this.setState({ framerTickSize: 10 })
-
-    const {
-      canvas,
-      framerTickSize,
-      framerFrequencyData,
-      canvasScaleCoef,
-      framerTransformScale,
-      sceneRadius,
-      initialFixedTicks
-    } = this.state
-
-    const ticks = this.framerGetTickPoints()
-    let x1, y1, x2, y2, ticksArray = [], tick, k
-    const lesser = 160
-    const allScales = []
-    for (let i = 0, len = ticks.length; i < len; ++i) {
-      const coef = 1 - i / (len * 2.5)
-      let delta = 0
-
-      if (this.state.gainNode) {
-        switch (this.state.gainNode.gain.value) {
-          case 0:
-              delta = 0
-            break
-
-          case 0.5:
-            delta = (((framerFrequencyData[i] || 0) - lesser * coef) * canvasScaleCoef) / 2
-            break
-
-          case 1:
-            delta = ((framerFrequencyData[i] || 0) - lesser * coef) * canvasScaleCoef
-            break
-
-          default:
-            delta = ((framerFrequencyData[i] || 0) - lesser * coef) * canvasScaleCoef
-            break
-        }
-      }
-
-      if (delta < 0) {
-        delta = 0
-      }
-
-      tick = ticks[i]
-      if (initialFixedTicks) {
-        if (animationParams[0] <= tick.angle && tick.angle <= animationParams[1]) {
-          k = sceneRadius / (sceneRadius - this.framerGetSize(tick.angle, animationParams[0], animationParams[1]) - delta)
-        } else {
-          k = sceneRadius / (sceneRadius - (framerTickSize + delta))
-        }
-      } else {
-        k = sceneRadius / (sceneRadius - (framerTickSize + delta))
-      }
-      x1 = tick.x * (sceneRadius - framerTickSize)
-      y1 = tick.y * (sceneRadius - framerTickSize)
-      x2 = x1 * k
-      y2 = y1 * k
-      ticksArray.push({ x1: x1, y1: y1, x2: x2, y2: y2 })
-      if (i < 20) {
-        let scale = delta / 50
-        scale = scale < 1 ? 1 : scale
-        allScales.push(scale)
-      }
-    }
-    const sum = allScales.reduce((pv, cv) => { return pv + cv }, 0) / allScales.length
-    if (framerTransformScale) {
-      canvas.style.transform = `scale('${sum}')`
-    }
-    return ticksArray
-  }
 
   framerGetSize(angle, l, r) {
     const {
@@ -975,21 +761,6 @@ class Audio extends Component {
     }
 
     return size
-  }
-
-  framerGetTickPoints() {
-    const {
-      framerCountTicks,
-      framerPI
-    } = this.state
-    const coords = [], step = framerPI / framerCountTicks
-
-    for (let deg = 0; deg < framerPI; deg += step) {
-      const rad = deg * Math.PI / (framerPI / 2)
-      coords.push({ x: Math.cos(rad), y: -Math.sin(rad), angle: deg })
-    }
-
-    return coords
   }
 
   framerDrawEdging() {
@@ -1264,43 +1035,6 @@ class Audio extends Component {
     }
   }
 
-  changeVolume() {
-    let { gainNode } = this.state
-
-    if (gainNode == null) {
-      return
-    }
-
-    switch (gainNode.gain.value) {
-      case 0:
-          gainNode.gain.value = 0.5
-        break
-
-      case 0.5:
-          gainNode.gain.value = 1
-        break
-
-      case 1:
-          gainNode.gain.value = 0
-        break
-
-      default:
-        break
-    }
-
-    this.setState({ gainNode, updatedVolume: true })
-  }
-
-  getVolume() {
-    const { gainNode } = this.state
-
-    if (gainNode == null) {
-      return 1
-    }
-
-    return gainNode.gain.value
-  }
-
   getSongName() {
     const { tracks, musicIndex } = this.state
     if (tracks[musicIndex]) {
@@ -1328,30 +1062,11 @@ class Audio extends Component {
             </div>
             <div className='controls'>
               <div className='prev-song'>
-                <FastRewind style={{ fontSize: '72px', color: 'rgba(97, 218, 251, 0.8)', margin: '1rem', cursor: 'pointer' }} onClick={this.prevSong} />
-              </div>
-              <div className='pause-play-song'>
-              { this.state.isLoadingSong
-                ? <div className='loader'><div></div><div></div></div>
-                : !this.state.playing
-                    ? <PlayArrow style={{ fontSize: '72px', color: 'rgba(97, 218, 251, 0.8)', margin: '1rem', cursor: 'pointer' }} onClick={this.resumeSong} />
-                    : <Pause style={{ fontSize: '72px', color: 'rgba(97, 218, 251, 0.8)', margin: '1rem', cursor: 'pointer' }} onClick={this.suspendSong} />
-                }
+                <DonutLarge style={{ fontSize: '72px', color: 'rgba(97, 218, 251, 0.8)', margin: '1rem', cursor: 'pointer' }} onClick={this.prevSong} />
               </div>
               <div className='next-song'>
-                <FastForward style={{ fontSize: '72px', color: 'rgba(97, 218, 251, 0.8)', margin: '1rem', cursor: 'pointer' }} onClick={this.nextSong} />
+                <DonutLarge style={{ fontSize: '72px', color: 'rgba(97, 218, 251, 0.8)', margin: '1rem', cursor: 'pointer' }} onClick={this.nextSong} />
               </div>
-            </div>
-            <div className='song-footer'>
-              <div className='song-gain'>{
-                this.getVolume() === 0
-                  ? <VolumeMute style={{ cursor: 'pointer' }} onClick={this.changeVolume} />
-                  : this.getVolume() < 1
-                    ? <VolumeDown style={{ cursor: 'pointer' }} onClick={this.changeVolume} />
-                    : <VolumeUp style={{ cursor: 'pointer' }} onClick={this.changeVolume} />
-                }
-              </div>
-            <div className='song-duration'>{this.state.timeControl.textContent}</div>
             </div>
           </div>
       </div>
