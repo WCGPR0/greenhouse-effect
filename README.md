@@ -1,6 +1,6 @@
 ## About the Project
-A web player build with react and web audio api.
+An experimental web player project build with React and Web Audio API.
 
 The layout was inspired by `Willian Justen`, and audio processing by `Daniel Barion`.
 
-Music is by TBD
+Music is by Mike Mol

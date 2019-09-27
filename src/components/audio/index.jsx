@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import legendsNeverDie from 'assets/music/legends-never-die.mp3'
+import mmBulletproof from 'assets/music/mm-bulletproof.mp3'
 import audioWorkerJS from './audio.worker.js'
 
 import {
@@ -34,9 +34,9 @@ class Audio extends Component {
       duration: 0,
       tracks: [
         {
-          name: 'Untitled',
-          artist: 'Greenhouse Effect',
-          url: legendsNeverDie
+          name: 'Bulletproof',
+          artist: 'Mike Mol',
+          url: mmBulletproof
         }
       ],
       musicIndex: 0,
